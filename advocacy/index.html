@@ -34,7 +34,7 @@
   }
   h1,h2,h3,.wordmark{font-family:'Sora',sans-serif;letter-spacing:-0.02em}
   a{color:inherit;text-decoration:none}
-  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
   .eyebrow{
     font-size:12px;font-weight:700;letter-spacing:.14em;
     text-transform:uppercase;color:var(--mint-deep);margin-bottom:14px;
@@ -219,18 +219,36 @@
   .why p b{color:#fff}
 
   /* Register */
-  .register{padding:80px 0}
+  .register{padding:90px 0;background:
+    radial-gradient(50% 80% at 100% 0%, rgba(62,207,178,.12), transparent 60%),
+    var(--paper)}
+  .reg-grid{
+    display:grid;grid-template-columns:1fr 1.05fr;gap:64px;align-items:center;
+  }
+  .reg-pitch .eyebrow{text-align:left}
+  .reg-pitch h2{font-size:clamp(26px,3.2vw,40px);font-weight:800;line-height:1.15;margin-bottom:14px}
+  .reg-pitch h2 em{font-style:normal;color:var(--mint-deep)}
+  .reg-pitch .rsub{color:var(--muted);margin-bottom:28px;font-size:16.5px;max-width:440px}
+  .reg-points{list-style:none;padding:0;margin:0}
+  .reg-points li{
+    position:relative;padding:11px 0 11px 34px;font-size:15.5px;
+    border-bottom:1px dashed var(--line);max-width:440px;
+  }
+  .reg-points li:last-child{border-bottom:0}
+  .reg-points li::before{content:"✓";position:absolute;left:2px;color:var(--mint-deep);font-weight:800}
   .reg-card{
-    max-width:640px;margin:0 auto;background:#fff;
-    border:1.5px solid var(--line);border-radius:24px;
+    background:#fff;border:1.5px solid var(--line);border-radius:24px;
     box-shadow:0 24px 60px rgba(64,56,200,.08);
-    padding:44px 44px 40px;
+    padding:40px 40px 36px;
+  }
+  @media(max-width:940px){
+    .reg-grid{grid-template-columns:1fr;gap:40px;max-width:640px;margin:0 auto}
+    .reg-pitch{text-align:center}
+    .reg-pitch .eyebrow{text-align:center}
+    .reg-pitch .rsub,.reg-points li{margin-left:auto;margin-right:auto}
+    .reg-points li{text-align:left}
   }
   @media(max-width:560px){.reg-card{padding:32px 24px}}
-  .reg-card .eyebrow{text-align:center}
-  .reg-card h2{font-size:clamp(24px,3.6vw,32px);font-weight:800;text-align:center;margin-bottom:8px}
-  .reg-card h2 em{font-style:normal;color:var(--mint-deep)}
-  .reg-card .rsub{text-align:center;color:var(--muted);margin-bottom:30px;font-size:15.5px}
   .field{margin-bottom:18px}
   .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:7px;color:var(--text)}
   .field .req{color:#D6455D;margin-left:2px}
@@ -517,12 +535,19 @@
 <!-- REGISTER -->
 <section class="register" id="register">
   <div class="wrap">
-    <div class="reg-card">
-      <div id="regForm">
+    <div class="reg-grid">
+      <div class="reg-pitch">
         <div class="eyebrow">Get started</div>
         <h2>Launch your first <em>advocacy campaign</em></h2>
-        <p class="rsub">Tell us where to reach you. We'll get you set up.</p>
-
+        <p class="rsub">Tell us where to reach you. We'll get you set up — no credit card, no implementation project.</p>
+        <ul class="reg-points">
+          <li>Your first campaign live in days, not weeks</li>
+          <li>Customer-voice content, referrals, and proof in one place</li>
+          <li>Upgrade to the full AdvockateED&trade; portal anytime — everything carries over</li>
+        </ul>
+      </div>
+      <div class="reg-card">
+      <div id="regForm">
         <div class="field-row">
           <div class="field">
             <label for="fname">First name<span class="req">*</span></label>
@@ -585,12 +610,14 @@
 
         <button class="btn btn-mint" id="regBtn" type="button">Register now &rarr;</button>
         <p class="reg-fine">All fields required. Powered by AdvockateED&trade;.</p>
+        <p id="regError" style="display:none;text-align:center;font-size:13.5px;color:#D6455D;margin-top:10px">Something went wrong sending your details. Please try again, or email <a href="mailto:support@ocmo.ai" style="text-decoration:underline">support@ocmo.ai</a>.</p>
       </div>
 
       <div class="reg-success" id="regSuccess">
         <div class="tick">&#10003;</div>
         <h3>You're on the list.</h3>
         <p>We'll be in touch shortly to launch your first advocacy campaign.</p>
+      </div>
       </div>
     </div>
   </div>
@@ -712,13 +739,33 @@
       industry:  f.industry.value
     };
 
-    // TODO: send `payload` to your backend / form endpoint here
-    // e.g. fetch("YOUR_ENDPOINT", {method:"POST", body: JSON.stringify(payload)})
-    console.log("Xpressz registration:", payload);
+    // ── Submit via Web3Forms ─────────────────────────────────
+    payload.access_key = "e2bd48a5-dfbf-4d12-8a5f-57b17caba440";
+    payload.subject = "New Xpressz registration — " + payload.company;
+    payload.from_name = "Xpressz Landing Page";
 
-    form.style.display = "none";
-    success.style.display = "block";
-    success.scrollIntoView({behavior:"smooth", block:"center"});
+    btn.disabled = true;
+    btn.textContent = "Registering…";
+    var errNote = document.getElementById("regError");
+    errNote.style.display = "none";
+
+    fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if(!data.success) throw new Error("Submission failed");
+      form.style.display = "none";
+      success.style.display = "block";
+      success.scrollIntoView({behavior:"smooth", block:"center"});
+    })
+    .catch(function(){
+      btn.disabled = false;
+      btn.innerHTML = "Register now &rarr;";
+      errNote.style.display = "block";
+    });
   });
 </script>
 </body>

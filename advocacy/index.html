@@ -584,6 +584,7 @@
         </div>
 
         <button class="btn btn-mint" id="regBtn" type="button">Register now &rarr;</button>
+        <p id="regError" style="display:none;text-align:center;font-size:13.5px;color:#B4457A;margin-top:12px;font-weight:600">Something went wrong and your registration didn't go through. Please try again, or email support@ocmo.ai.</p>
         <p class="reg-fine">All fields required. Powered by AdvockateED&trade;.</p>
       </div>
 
@@ -709,16 +710,37 @@
       country:   f.country.value,
       countryCode: f.ccode.value,
       mobile:    f.mobile.value.trim(),
-      industry:  f.industry.value
+      industry:  f.industry.value,
+      botcheck:  false
     };
 
-    // TODO: send `payload` to your backend / form endpoint here
-    // e.g. fetch("YOUR_ENDPOINT", {method:"POST", body: JSON.stringify(payload)})
-    console.log("Xpressz registration:", payload);
+    // ── Web3Forms wiring ──
+    var FORM_ENDPOINT = "https://api.web3forms.com/submit";
+    payload.access_key = "e2bd48a5-dfbf-4d12-8a5f-57b17caba440";
+    payload.subject = "New Xpressz registration: " + payload.firstName + " " + payload.lastName + " (" + payload.company + ")";
+    payload.from_name = "Xpressz Landing Page";
 
-    form.style.display = "none";
-    success.style.display = "block";
-    success.scrollIntoView({behavior:"smooth", block:"center"});
+    var errMsg = document.getElementById("regError");
+    errMsg.style.display = "none";
+    btn.disabled = true;
+    btn.innerHTML = "Submitting\u2026";
+
+    fetch(FORM_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function(res){ return res.json(); })
+    .then(function(data){
+      if(!data.success) throw new Error(data.message || "Submission rejected");
+      form.style.display = "none";
+      success.style.display = "block";
+      success.scrollIntoView({behavior:"smooth", block:"center"});
+    }).catch(function(err){
+      console.error("Registration failed:", err);
+      btn.disabled = false;
+      btn.innerHTML = "Register now \u2192";
+      errMsg.style.display = "block";
+    });
   });
 </script>
 </body>
